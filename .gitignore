@@ -1,0 +1,4 @@
+*.out
+**/*_test.go
+/enhancedimg/testdata/
+/enhancedimg/static/

@@ -38,6 +38,9 @@ type sizeVariant struct {
 }
 
 func (ei enhancedImg) aspectRatio() float64 {
+	if ei.img.width <= 0 {
+		return 0
+	}
 	return float64(ei.img.height) / float64(ei.img.width)
 }
 
@@ -55,6 +58,9 @@ func init() {
 }
 
 func encodeJPEG(img image.Image, quality int) ([]byte, error) {
+	if img == nil || img.Bounds().Empty() {
+		return nil, fmt.Errorf("invalid bounds for JPEG")
+	}
 	var buf bytes.Buffer
 	options := &jpeg.Options{
 		Quality: quality,
@@ -66,17 +72,23 @@ func encodeJPEG(img image.Image, quality int) ([]byte, error) {
 }
 
 func encodePNG(img image.Image, _ int) ([]byte, error) {
+	if img == nil || img.Bounds().Empty() {
+		return nil, fmt.Errorf("invalid bounds for PNG")
+	}
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, img); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unexpected error encoding PNG: %w", err)
 	}
 	return buf.Bytes(), nil
 }
 
 func encodeGIF(img image.Image, _ int) ([]byte, error) {
+	if img == nil || img.Bounds().Empty() {
+		return nil, fmt.Errorf("invalid bounds for GIF")
+	}
 	var buf bytes.Buffer
 	if err := gif.Encode(&buf, img, nil); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unexpected error encoding GIF: %w", err)
 	}
 	return buf.Bytes(), nil
 }
@@ -110,6 +122,9 @@ func enhanceImage(src string) (enhancedImg, error) {
 	}
 
 	bounds := img.Bounds()
+	if bounds.Dx() <= 0 || bounds.Dy() <= 0 {
+		return enhancedImg{}, fmt.Errorf("invalid image dimensions: width=%d height=%d", bounds.Dx(), bounds.Dy())
+	}
 	enhancedImage := enhancedImg{
 		sourceImagePath: src,
 		sources:         make(map[string][]string),
@@ -138,9 +153,14 @@ func enhanceImage(src string) (enhancedImg, error) {
 
 		for _, size := range sizes {
 			height := int(math.Round(float64(size.width) * enhancedImage.aspectRatio()))
-			resized := resizeImage(img, size.width, height)
+			resized, err := resizeImage(img, size.width, height)
+			if err != nil {
+				fmt.Printf("Error resizing image: %v\n", err)
+				continue
+			}
 			processed, err := format.encode(resized, format.quality)
 			if err != nil {
+				fmt.Printf("Error encoding image: %v\n", err)
 				continue
 			}
 

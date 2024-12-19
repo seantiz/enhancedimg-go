@@ -8,6 +8,7 @@ package enhancedimg
 import (
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -18,6 +19,10 @@ import (
 // FindAllImageElements tracks difference between source and target HTML before saving all changes to target.
 // The map avoids any problems with hot reloading in a dev environment.
 func FindAllImageElements(templatesDir string) error {
+	if _, err := os.Stat(templatesDir); os.IsNotExist(err) {
+		return fmt.Errorf("template directory does not exist: %s", templatesDir)
+	}
+
 	processedFiles := make(map[string]bool)
 
 	return filepath.Walk(templatesDir, func(path string, info fs.FileInfo, walkErr error) error {

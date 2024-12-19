@@ -1,6 +1,7 @@
 package enhancedimg
 
 import (
+	"fmt"
 	"image"
 	"os"
 	"path/filepath"
@@ -58,10 +59,13 @@ func findImageTags(n *html.Node, tags *[]*html.Node) {
 	}
 }
 
-func resizeImage(img image.Image, width, height int) image.Image {
+func resizeImage(img image.Image, width, height int) (image.Image, error) {
+	if width <= 0 || height <= 0 {
+		return nil, fmt.Errorf("invalid resize dimensions: width=%d height=%d", width, height)
+	}
 	dst := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.ApproxBiLinear.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
-	return dst
+	return dst, nil
 }
 
 func getOriginalTag(n *html.Node) string {
