@@ -38,9 +38,15 @@ Installation options:
 
 ## Long-Term Performance?
 
-Pre-processing time increases with content size, so I initially built a version of enhancedimg-go that uses `bimg` for a more performant image-processing step.
+Pre-processing time increases with content size - especially image content, less so with HTML structure holding the images. Here's a performance test with just 6 input images (and this is without transforms as part of the job!):
 
-I decided against going down that route because it means:
+```bash
+HTML parsing: 132.917µs (0.132917 milliseconds)
+Image processing: 15.704458ms (15.704458 milliseconds)
+```
+Image processing takes around 118 times longer than parsing the HTML.
+
+One option is to implement a version of enhancedimg-go that uses `bimg` for performance. But I decided against going down that route, for now, because it means:
 
 1. Any developer would have to install `libvips` as a system-level dependency
 2. I don't know any medium or entreprise-scale web apps published with a Go + HTML/X stack as of yet, so content size (and processing time) seems like it has a modest upper bounds in most cases right now.
@@ -49,4 +55,4 @@ Feel free to get in touch if you disagree or you're running a Go + HTML/X codeba
 
 ## Credit Where It's Due
 
-The logic behind this package was heavily lifted from the SvelteJS enhanced-img preprocessor (being a big Svelte user myself) and Tailwind.
+The logic behind this package was heavily lifted from the SvelteJS enhanced-img preprocessor (being a big SvelteJS user myself) and Tailwind.
