@@ -25,16 +25,12 @@ Installation options:
 
 - Responsive web design supported but no data transforms handled yet.
 - All common device sizes supported - ranging from Tailwind's small ("sm") device breakpoint and up to 4K (and slightly beyond).
-- WEBP, AVIF not yet supported but are handled by falling back to PNG on conversion.
-- HEIF and TIFF source images are converted to JPEG.
+- AVIF source images not fully supported and will be converted to PNG.
+- HEIF and TIFF source images will be converted to JPEG.
 
-## Dependencies and Limitations (PRs welcome)
+## Known Limitations
 
-1. I leaned on the standard Go HTML parser in this package. I'll look at any way to shave down this dependency, if possible.
-
-2. I couldn't find a clean way to encode WebP images in Go just yet, despite the fact `optimisable()` utility tries to match the `.webp` format during parsing. The solutions I find meant pulling in more dependencies.
-
-3. Right now this library (as of v0.3.0) deals purely with resizing images for responsive design but actual image enhancement still needs to be implement by reading all metadata for transformation attributes.
+Right now this library (as of v0.6.0) deals purely with injecting picture elements and responsive image variants only. Actual image enhancement (like transforms) are yet to be implemented.
 
 ## Long-Term Performance?
 
@@ -44,6 +40,8 @@ Pre-processing time increases with content size - especially image content, less
 HTML parsing: 132.917µs (0.132917 milliseconds)
 Image processing: 15.704458ms (15.704458 milliseconds)
 ```
+Under bulk testing, processing 512 images in one run took just over 40 seconds.
+
 Image processing takes around 118 times longer than parsing the HTML.
 
 One option is to implement a version of enhancedimg-go that uses `bimg` for performance. But I decided against going down that route, for now, because it means:
