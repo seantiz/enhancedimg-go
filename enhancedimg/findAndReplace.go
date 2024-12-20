@@ -115,27 +115,46 @@ func createPictureElement(ei enhancedImg, originalImg *html.Node) *html.Node {
 		Data: "picture",
 	}
 
+	// Readable formatting in target picture templates
+	picture.AppendChild(&html.Node{Type: html.TextNode, Data: "\n"})
+
 	for format, srcsets := range ei.sources {
 		source := &html.Node{
 			Type: html.ElementNode,
 			Data: "source",
 		}
-		setAttr(source, "srcset", strings.Join(srcsets, ", "))
+
+		formattedSrcset := strings.Join(
+			strings.Split(strings.Join(srcsets, ",\n                                "), ","),
+			",\n                                ")
+
+		setAttr(source, "srcset", formattedSrcset)
 		setAttr(source, "type", "image/"+format)
-		setAttr(source, "sizes", "(max-width: 640px) 640px, (max-width: 1024px) 1024px, 1920px")
+		setAttr(source, "sizes", "(max-width: 640px) 640px,\n                               (max-width: 768px) 768px,\n                               (max-width: 1024px) 1024px,\n                               1280px")
+
+		picture.AppendChild(&html.Node{Type: html.TextNode, Data: "                    "})
 		picture.AppendChild(source)
+		picture.AppendChild(&html.Node{Type: html.TextNode, Data: "\n"})
 	}
 
 	img := &html.Node{
 		Type: html.ElementNode,
 		Data: "img",
 	}
-	setAttr(img, "src", "/"+strings.TrimPrefix(ei.img.src, "/"))
-	setAttr(img, "width", fmt.Sprintf("%d", ei.img.width))
-	setAttr(img, "height", fmt.Sprintf("%d", ei.img.height))
+
+	// Default src is medium variant
+	mediumSrc := "/static/processed/" + strings.TrimPrefix(ei.img.src, "/")
+	mediumSrc = strings.Replace(mediumSrc, filepath.Ext(mediumSrc), "-md-768"+filepath.Ext(mediumSrc), 1)
+
+	setAttr(img, "src", mediumSrc)
+	setAttr(img, "width", "768")
+	setAttr(img, "height", fmt.Sprintf("%d", int(float64(768)*float64(ei.img.height)/float64(ei.img.width))))
 	setAttr(img, "loading", "lazy")
 	setAttr(img, "class", getAttr(originalImg, "class"))
+
+	picture.AppendChild(&html.Node{Type: html.TextNode, Data: "                    "})
 	picture.AppendChild(img)
+	picture.AppendChild(&html.Node{Type: html.TextNode, Data: "\n                "})
 
 	return picture
 }
