@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"image/gif"
@@ -101,8 +102,9 @@ func selectEncoder(inputFormat string) selectedEncoder {
 }
 
 func enhanceImage(src string) (enhancedImg, error) {
+	// Relative path wih trimming
+	originalSrc := src
 	src = strings.TrimPrefix(src, "/")
-
 	f, err := os.Open(src)
 	if err != nil {
 		return enhancedImg{}, fmt.Errorf("couldn't open file %s: %w", src, err)
@@ -126,20 +128,22 @@ func enhanceImage(src string) (enhancedImg, error) {
 		return enhancedImg{}, fmt.Errorf("invalid image dimensions: width=%d height=%d", bounds.Dx(), bounds.Dy())
 	}
 	enhancedImage := enhancedImg{
-		sourceImagePath: src,
+		sourceImagePath: originalSrc,
 		sources:         make(map[string][]string),
 		img: struct {
 			src    string
 			width  int
 			height int
 		}{
-			src:    src,
+			src:    originalSrc,
 			width:  bounds.Dx(),
 			height: bounds.Dy(),
 		},
 	}
 
 	// This helper ensures we don't return larger sizes than source image
+	// We do append the source image if it is smaller than the smallest breakpoint and
+	// If it falls between breakpoints
 	sizes := calculateSizeVariants(bounds.Dx())
 
 	baseFileName := filepath.Base(src)
@@ -172,8 +176,12 @@ func enhanceImage(src string) (enhancedImg, error) {
 			)
 
 			outPath := filepath.Join("static", "processed", processedFileName)
+
+			if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
+				return enhancedImg{}, fmt.Errorf("failed to create output directory: %w", err)
+			}
 			if err := os.WriteFile(outPath, processed, 0644); err != nil {
-				continue
+				return enhancedImg{}, fmt.Errorf("failed to write processed image: %w", err)
 			}
 
 			srcsets = append(srcsets, fmt.Sprintf("/static/processed/%s %dw",
@@ -194,7 +202,7 @@ func calculateSizeVariants(originalWidth int) []sizeVariant {
 	if originalWidth <= 0 {
 		return []sizeVariant{}
 	}
-	// Sizes beyond 2xl follow SvelteJS's reasoning and https://screensiz.es/ common device sizes
+
 	sizes := []sizeVariant{
 		{width: 640, label: "sm"},
 		{width: 768, label: "md"},
@@ -208,13 +216,11 @@ func calculateSizeVariants(originalWidth int) []sizeVariant {
 		{width: 5120, label: "7xl"},
 	}
 
-	var result []sizeVariant
-	for _, size := range sizes {
-		if size.width > originalWidth {
-			break
-		}
-		result = append(result, size)
-	}
+	i := sort.Search(len(sizes), func(i int) bool {
+		return sizes[i].width > originalWidth
+	})
+
+	result := sizes[:i]
 
 	if len(result) == 0 || result[len(result)-1].width != originalWidth {
 		result = append(result, sizeVariant{
