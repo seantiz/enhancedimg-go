@@ -13,6 +13,8 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+
+	"github.com/chai2010/webp"
 )
 
 var fallbacks map[string]selectedEncoder
@@ -54,7 +56,7 @@ func init() {
 		".jpg":  {"jpg", encodeJPEG, 85},
 		".png":  {"png", encodePNG, 0},
 		".tiff": {"jpg", encodeJPEG, 85},
-		".webp": {"png", encodePNG, 0},
+		".webp": {"webp", encodeWEBP, 80},
 	}
 }
 
@@ -90,6 +92,21 @@ func encodeGIF(img image.Image, _ int) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gif.Encode(&buf, img, nil); err != nil {
 		return nil, fmt.Errorf("unexpected error encoding GIF: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+func encodeWEBP(img image.Image, quality int) ([]byte, error) {
+	if img == nil || img.Bounds().Empty() {
+		return nil, fmt.Errorf("invalid bounds for WEBP")
+	}
+	var buf bytes.Buffer
+	options := &webp.Options{
+		Lossless: false,
+		Quality:  float32(quality),
+	}
+	if err := webp.Encode(&buf, img, options); err != nil {
+		return nil, fmt.Errorf("unexpected error encoding WEBP: %w", err)
 	}
 	return buf.Bytes(), nil
 }
