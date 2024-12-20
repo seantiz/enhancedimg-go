@@ -124,9 +124,7 @@ func createPictureElement(ei enhancedImg, originalImg *html.Node) *html.Node {
 			Data: "source",
 		}
 
-		formattedSrcset := strings.Join(
-			strings.Split(strings.Join(srcsets, ",\n                                "), ","),
-			",\n                                ")
+		formattedSrcset := strings.Join(srcsets, ",\n                    ")
 
 		setAttr(source, "srcset", formattedSrcset)
 		setAttr(source, "type", "image/"+format)
