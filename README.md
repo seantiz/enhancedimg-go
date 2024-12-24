@@ -10,7 +10,7 @@ It's still in alpha because I've yet to implement ability to apply transformatio
 
 ## Quick Start
 
-Installation options:
+Quick start options:
 
 1. Install globally:
    ```bash
@@ -20,6 +20,22 @@ Installation options:
    Then run with `enhancedimg-go` command
 
 2. Via Makefile: Create a Makefile to run `enhanceddimg-go` programatically before your build command.
+
+3. Import as a dependency (NOTE: Run BEFORE any http handlers!):
+
+```go
+// Your web app's main module
+import "github.com/seantiz/enhancedimg-go/enhancedimg"
+
+// IMPORTANT: Make a call to the EnhanceImages API before any http template handlers
+// Change path argument passed to EnhanceImages as needed
+func main() {
+    err := enhancedimg.EnhanceImages("./")
+    if err != nil {
+        log.Fatal(err)
+    }
+}
+```
 
 ## Features
 
